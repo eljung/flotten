@@ -1,3 +1,4 @@
 influxdb_client==1.48.0
 python-decouple==3.8
-Requests==2.32.3
+requests==2.32.3
+jmespath==1.0.1
