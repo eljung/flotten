@@ -1,11 +1,11 @@
 version: "3.8"
 
 services:
-  ecoflow2influx:
+  ef2in:
     build:
-      context: ./ecoflow2influx
+      context: ./ef2in
       dockerfile: Dockerfile
-    container_name: ecoflow2influx
+    container_name: ef2in
     depends_on:
       - influxdb
     environment:
@@ -16,13 +16,12 @@ services:
     secrets:
       - app-secrets
       - influxdb-token
-
+    networks:
+      - internal_network
 
   influxdb:
     image: influxdb:2
     container_name: influxdb
-    ports:
-      - "8086:8086"
     environment:
       DOCKER_INFLUXDB_INIT_MODE: setup
       DOCKER_INFLUXDB_INIT_USERNAME: admin
@@ -39,6 +38,36 @@ services:
       - type: volume
         source: influxdb-config
         target: /etc/influxdb2
+    networks:
+      - internal_network
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - influxdb
+    networks:
+      - internal_network
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+#    networks:
+#      - internal_network
+
+networks:
+  internal_network:
+    internal: true
 
 secrets:
   app-secrets:
